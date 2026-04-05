@@ -1,0 +1,9 @@
+[package]
+name = "pheno-mcp"
+version = "0.1.0"
+edition = "2024"
+description = "Model Context Protocol - polyglot"
+
+[workspace]
+members = ["crates/*"]
+resolver = "3"
