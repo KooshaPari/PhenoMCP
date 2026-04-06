@@ -2,7 +2,10 @@
 name = "pheno-mcp"
 version = "0.1.0"
 edition = "2024"
-description = "Model Context Protocol - polyglot"
+description = "PhenoMCP - Model Context Protocol"
+
+[lib]
+path = "crates/pheno-mcp-core/src/lib.rs"
 
 [workspace]
 members = ["crates/*"]
