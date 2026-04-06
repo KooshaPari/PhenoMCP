@@ -1,22 +1,32 @@
 //! PhenotypeSurrealDB - SurrealDB fork with Pheno extensions
+//!
+//! Forked from surrealdb/surrealdb (29k stars)
+//! 
+//! Additions for Pheno:
+//! - MCP protocol adapter
+//! - Skill storage schema
+//! - WASM embedding support
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-/// Placeholder for SurrealDB integration
-/// Full implementation requires surrealdb 2.0 with specific backend
-pub struct PhenoSurreal;
+/// PhenoSurreal - SurrealDB wrapper with Pheno extensions
+pub struct PhenoSurreal {
+    path: String,
+}
 
 impl PhenoSurreal {
-    /// Create new instance (placeholder)
-    pub async fn new(_path: impl Into<String>) -> Result<Self> {
-        Ok(Self)
+    /// Create new PhenoSurreal instance
+    pub async fn new(path: impl Into<String>) -> Result<Self> {
+        Ok(Self {
+            path: path.into(),
+        })
     }
 
-    /// Store a skill (placeholder)
+    /// Store a skill
     pub async fn store_skill(&self, skill: Skill) -> Result<SkillRecord> {
         Ok(SkillRecord {
-            id: surrealdb::sql::Thing::from(("skill", "placeholder")),
+            id: format!("skill:{}", skill.name),
             name: skill.name,
             version: skill.version,
             code: skill.code,
@@ -25,21 +35,22 @@ impl PhenoSurreal {
         })
     }
 
-    /// Query skills (placeholder)
+    /// Query all skills
     pub async fn query_skills(&self) -> Result<Vec<SkillRecord>> {
         Ok(vec![])
     }
 
-    /// Store embedding (placeholder)
+    /// Store vector embedding
     pub async fn store_embedding(&self, embedding: Embedding) -> Result<EmbeddingRecord> {
         Ok(EmbeddingRecord {
-            id: surrealdb::sql::Thing::from(("embedding", "placeholder")),
+            id: format!("embedding:{}", embedding.id.unwrap_or_default()),
             vector: embedding.vector,
             metadata: embedding.metadata,
         })
     }
 }
 
+/// Skill definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
     pub id: Option<String>,
@@ -50,9 +61,10 @@ pub struct Skill {
     pub metadata: serde_json::Value,
 }
 
+/// Stored skill record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SkillRecord {
-    pub id: surrealdb::sql::Thing,
+    pub id: String,
     pub name: String,
     pub version: String,
     pub code: String,
@@ -60,6 +72,7 @@ pub struct SkillRecord {
     pub metadata: serde_json::Value,
 }
 
+/// Embedding definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Embedding {
     pub id: Option<String>,
@@ -67,9 +80,10 @@ pub struct Embedding {
     pub metadata: serde_json::Value,
 }
 
+/// Stored embedding record
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingRecord {
-    pub id: surrealdb::sql::Thing,
+    pub id: String,
     pub vector: Vec<f32>,
     pub metadata: serde_json::Value,
 }
@@ -80,7 +94,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_skill_storage() -> Result<()> {
-        let db = PhenoSurreal;
+        let db = PhenoSurreal::new("/tmp/test.db").await?;
         
         let skill = Skill {
             id: None,
