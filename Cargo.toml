@@ -2,7 +2,15 @@
 name = "pheno-mcp"
 version = "0.1.0"
 edition = "2024"
+<<<<<<< HEAD
 description = "Model Context Protocol - polyglot"
+=======
+description = "PhenoMCP - Model Context Protocol"
+
+[[bin]]
+name = "pheno-mcp"
+path = "src/main.rs"
+>>>>>>> 57ac155 (fix: repair workspace configuration)
 
 [workspace]
 members = ["crates/*"]
