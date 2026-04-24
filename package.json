@@ -1,5 +1,6 @@
 {
   "name": "@phenotype/mcp",
   "version": "0.1.0",
-  "description": "MCP TypeScript SDK"
+  "description": "MCP TypeScript SDK",
+  "license": "MIT OR Apache-2.0"
 }
