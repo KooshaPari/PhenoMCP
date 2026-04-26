@@ -1,5 +1,10 @@
 # PhenoMCP
 
+[![Build](https://img.shields.io/github/actions/workflow/status/KooshaPari/PhenoMCP/ci.yml?branch=main&label=build)](https://github.com/KooshaPari/PhenoMCP/actions)
+[![Release](https://img.shields.io/github/v/release/KooshaPari/PhenoMCP?include_prereleases&sort=semver)](https://github.com/KooshaPari/PhenoMCP/releases)
+[![License](https://img.shields.io/github/license/KooshaPari/PhenoMCP)](LICENSE)
+[![Phenotype](https://img.shields.io/badge/Phenotype-org-blueviolet)](https://github.com/KooshaPari)
+
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/KooshaPari/PhenoMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/KooshaPari/PhenoMCP/actions/workflows/ci.yml)
 [![Language: Rust](https://img.shields.io/badge/language-Rust-orange.svg)](https://www.rust-lang.org/)
