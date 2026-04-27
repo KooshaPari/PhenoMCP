@@ -104,6 +104,16 @@ See `PLAN.md`, `PRD.md`, `ADR.md`, and `CHARTER.md` in this repository for
 the intended direction. Those documents describe the target architecture;
 this README describes the current state.
 
+## Docs surface
+
+The `docs/` directory now serves as the docs landing surface for this scaffold.
+It exposes:
+
+- the current project overview
+- research notes for MCP and multi-language AI SDKs
+- the feature coverage matrix
+- the architecture notes behind `ADR-001` through `ADR-005`
+
 ## License
 
 Dual-licensed under MIT or Apache-2.0, at your option. See `LICENSE-MIT`
