@@ -7,6 +7,20 @@ db-path = "$CARGO_HOME/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "warn"
 
+# rustls-webpki LOW severity advisories (alpha.7, stable 0.104.0 ETA May-June 2026)
+# Re-eval: 2026-06-01
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0098"
+reason = "rustls-webpki name-constraint bypass (LOW). Transitive via rustls. Fix in 0.104.0; current alpha-only (alpha.7 6 days old, May-June stable ETA). Re-evaluate 2026-06-01."
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0099"
+reason = "rustls-webpki wildcard name-constraint bypass (LOW). Same parent + ETA. Re-evaluate 2026-06-01."
+
+[[advisories.ignore]]
+id = "RUSTSEC-2026-0104"
+reason = "rustls-webpki CRL panic on empty BIT STRING (LOW). Same parent + ETA. Re-evaluate 2026-06-01."
+
 [licenses]
 allow = [
     "MIT",
