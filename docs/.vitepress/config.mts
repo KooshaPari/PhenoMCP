@@ -3,6 +3,7 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "PhenoMCP",
   description: "Multi-language MCP SDK and runtime for the Phenotype ecosystem",
+  base: process.env.GITHUB_PAGES === "true" ? "/PhenoMCP/" : "/",
   cleanUrls: true,
   themeConfig: {
     nav: [
