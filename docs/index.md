@@ -24,7 +24,7 @@ features:
 
 ## What actually exists today
 
-- Rust workspace root with placeholder binary entrypoint.
+- Rust workspace root with scaffold binary entrypoint.
 - Adapter crates for Meilisearch, Qdrant, and SurrealDB.
 - Language binding scaffolds for Swift, Kotlin, and C#.
 - Research notes, ADRs, and a coverage matrix in `docs/`.

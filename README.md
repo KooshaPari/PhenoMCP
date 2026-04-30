@@ -13,7 +13,7 @@
 > **Status: Experimental / Pre-foundational — Work in Progress**
 >
 > This repository is an early scaffold. The top-level `pheno-mcp` binary
-> (`src/main.rs`) is a placeholder. Real work is happening inside the
+> (`src/main.rs`) is a scaffold. Real work is happening inside the
 > `crates/` and `bindings/` directories described below.
 
 PhenoMCP is the planned home for a Model Context Protocol server plus a set
@@ -29,7 +29,7 @@ binary.
 ```
 .
 ├── Cargo.toml              # workspace root, members = ["crates/*"]
-├── src/main.rs             # placeholder: prints "PhenoMCP"
+├── src/main.rs             # scaffold: prints "PhenoMCP"
 ├── crates/
 │   ├── pheno-meilisearch/      # Meilisearch HTTP client (reqwest, scaffold)
 │   ├── pheno-qdrant/           # Qdrant HTTP client (reqwest, scaffold)
@@ -39,10 +39,10 @@ binary.
 │   ├── kotlin/src/               # Kotlin binding scaffold
 │   └── csharp/src/               # C# binding scaffold
 ├── docs/                   # design notes
-├── integration-tests/      # placeholder
-├── go.mod                  # placeholder
-├── package.json            # placeholder
-├── pyproject.toml          # placeholder
+├── integration-tests/      # scaffold
+├── go.mod                  # scaffold
+├── package.json            # scaffold
+├── pyproject.toml          # scaffold
 └── ADR.md, CHARTER.md, PLAN.md, PRD.md, VERSION
 ```
 
