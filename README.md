@@ -15,11 +15,12 @@
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/KooshaPari/PhenoMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/KooshaPari/PhenoMCP/actions/workflows/ci.yml)
 [![Language: Rust](https://img.shields.io/badge/language-Rust-orange.svg)](https://www.rust-lang.org/)
+[![AI Slop Inside](https://sladge.net/badge.svg)](https://sladge.net)
 
 > **Status: Experimental / Pre-foundational — Work in Progress**
 >
 > This repository is an early scaffold. The top-level `pheno-mcp` binary
-> (`src/main.rs`) is a placeholder. Real work is happening inside the
+> (`src/main.rs`) is a scaffold. Real work is happening inside the
 > `crates/` and `bindings/` directories described below.
 
 PhenoMCP is the planned home for a Model Context Protocol server plus a set
@@ -35,7 +36,7 @@ binary.
 ```
 .
 ├── Cargo.toml              # workspace root, members = ["crates/*"]
-├── src/main.rs             # placeholder: prints "PhenoMCP"
+├── src/main.rs             # scaffold: prints "PhenoMCP"
 ├── crates/
 │   ├── pheno-meilisearch/      # Meilisearch HTTP client (reqwest, scaffold)
 │   ├── pheno-qdrant/           # Qdrant HTTP client (reqwest, scaffold)
@@ -45,10 +46,10 @@ binary.
 │   ├── kotlin/src/               # Kotlin binding scaffold
 │   └── csharp/src/               # C# binding scaffold
 ├── docs/                   # design notes
-├── integration-tests/      # placeholder
-├── go.mod                  # placeholder
-├── package.json            # placeholder
-├── pyproject.toml          # placeholder
+├── integration-tests/      # scaffold
+├── go.mod                  # scaffold
+├── package.json            # scaffold
+├── pyproject.toml          # scaffold
 └── ADR.md, CHARTER.md, PLAN.md, PRD.md, VERSION
 ```
 
@@ -110,6 +111,16 @@ and exit. That is its entire current behavior.
 See `PLAN.md`, `PRD.md`, `ADR.md`, and `CHARTER.md` in this repository for
 the intended direction. Those documents describe the target architecture;
 this README describes the current state.
+
+## Docs surface
+
+The `docs/` directory now serves as the docs landing surface for this scaffold.
+It exposes:
+
+- the current project overview
+- research notes for MCP and multi-language AI SDKs
+- the feature coverage matrix
+- the architecture notes behind `ADR-001` through `ADR-005`
 
 ## License
 
