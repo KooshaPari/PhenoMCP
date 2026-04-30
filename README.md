@@ -8,6 +8,7 @@
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/KooshaPari/PhenoMCP/actions/workflows/ci.yml/badge.svg)](https://github.com/KooshaPari/PhenoMCP/actions/workflows/ci.yml)
 [![Language: Rust](https://img.shields.io/badge/language-Rust-orange.svg)](https://www.rust-lang.org/)
+[![AI Slop Inside](https://sladge.net/badge.svg)](https://sladge.net)
 
 > **Status: Experimental / Pre-foundational — Work in Progress**
 >
