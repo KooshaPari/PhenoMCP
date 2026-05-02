@@ -38,6 +38,9 @@ allow = [
 ]
 confidence-threshold = 0.8
 
+[rules]
+msrv = "1.85"
+
 [bans]
 multiple-versions = "warn"
 wildcards = "warn"
