@@ -12,7 +12,8 @@ use serde::{Deserialize, Serialize};
 
 /// PhenoSurreal - SurrealDB wrapper with Pheno extensions
 pub struct PhenoSurreal {
-    path: String,
+    #[allow(dead_code)]
+    path: String,  // path to SurrealDB data file (used when embedded)
 }
 
 impl PhenoSurreal {
