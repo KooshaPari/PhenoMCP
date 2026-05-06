@@ -1,8 +1,13 @@
 {
+  "private": true,
   "name": "@phenotype/mcp",
   "version": "0.1.0",
   "description": "MCP TypeScript SDK",
   "license": "MIT OR Apache-2.0",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
