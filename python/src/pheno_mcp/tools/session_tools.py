@@ -27,7 +27,7 @@ def _client() -> httpx.AsyncClient:
 # Tool schemas
 # ---------------------------------------------------------------------
 
-TOOL_SESSION_SUSPEND = {
+TOOL_SESSION_SUSPEND: dict[str, Any] = {
     "name": "session_suspend",
     "description": (
         "Suspend a running session, producing a serialised session bundle "
@@ -47,7 +47,7 @@ TOOL_SESSION_SUSPEND = {
 }
 
 
-TOOL_SESSION_RESUME = {
+TOOL_SESSION_RESUME: dict[str, Any] = {
     "name": "session_resume",
     "description": (
         "Resume a previously suspended session from its bundle reference. "
@@ -106,3 +106,37 @@ async def handle_session_resume(args: dict[str, Any]) -> dict[str, Any]:
                 "error": exc.response.text,
                 "status_code": exc.response.status_code,
             }
+
+
+# ---------------------------------------------------------------------
+# Server registration helpers
+# ---------------------------------------------------------------------
+
+
+def register_session_tools(server: Any) -> None:
+    """Register all session tools with an MCP server.
+
+    Args:
+        server: An MCP Server instance with register_tool method.
+    """
+    from pheno_mcp.server import Tool
+
+    # session_suspend tool
+    server.register_tool(
+        Tool(
+            name=TOOL_SESSION_SUSPEND["name"],
+            description=TOOL_SESSION_SUSPEND["description"],
+            input_schema=TOOL_SESSION_SUSPEND["input_schema"],
+            handler=handle_session_suspend,
+        )
+    )
+
+    # session_resume tool
+    server.register_tool(
+        Tool(
+            name=TOOL_SESSION_RESUME["name"],
+            description=TOOL_SESSION_RESUME["description"],
+            input_schema=TOOL_SESSION_RESUME["input_schema"],
+            handler=handle_session_resume,
+        )
+    )
