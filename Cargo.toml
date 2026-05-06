@@ -10,7 +10,11 @@ name = "pheno-mcp"
 path = "src/main.rs"
 
 [workspace]
-members = ["crates/*"]
+members = [
+  "crates/pheno-meilisearch",
+  "crates/pheno-qdrant",
+  "crates/phenotype-surrealdb"
+]
 resolver = "3"
 
 [profile.release]
