@@ -1,6 +1,5 @@
 # cargo-deny configuration
 # Conservative defaults: warn on most, deny only known-bad.
-# CI integration is intentionally NOT enabled in this commit.
 
 [advisories]
 db-path = "$CARGO_HOME/advisory-db"

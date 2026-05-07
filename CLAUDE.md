@@ -10,7 +10,7 @@ Extends parent governance. See the following for canonical definitions:
 
 - **Name:** PhenoMCP
 - **Description:** MCP bridges for Phenotype
-- **Location:** /Users/kooshapari/CodeProjects/Phenotype/repos/PhenoMCP
+- **Location:** /Users/kooshapari/CodeProjects/Phenotype/repos/phenomcp
 - **Language Stack:** Rust
 - **Status:** Active
 

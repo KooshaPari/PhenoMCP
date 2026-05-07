@@ -1,28 +1,3 @@
-linter-settings:
-  dogsled:
-    max-blank-lines: 2
-  errcheck:
-    check-type-assertions: true
-  exhaustive:
-    default-signifies-exhaustive: true
-  gocritic:
-    disabled-checks:
-      - unnamedResult
-  gofmt:
-    simplify: true
-  goimports:
-    local-prefixes: github.com/KooshaPari
-  gosec:
-    excludes:
-      - G104
-  misspell:
-    locale: US
-  noctx:
-    dns: true
-  nolintlint:
-    require-explanation: true
-    require-reason: true
-
 linters:
   enable:
     - dogsled
