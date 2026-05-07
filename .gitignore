@@ -1,5 +1,0 @@
-docs/.vitepress/dist/
-
-# Rust build artifacts
-/target
-target/

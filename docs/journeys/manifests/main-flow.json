@@ -1,9 +1,0 @@
-{
-  "id": "phenomcp-main",
-  "intent": "Primary flow: PhenoMCP: MCP framework",
-  "recording": null,
-  "recording_gif": null,
-  "keyframe_count": 0,
-  "passed": false,
-  "steps": []
-}
