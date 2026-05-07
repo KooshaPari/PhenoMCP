@@ -15,8 +15,14 @@ from pheno_mcp.tools.workflow_tools import (
     handle_workflow_status,
     handle_workflow_cancel,
     handle_workflow_list,
+    register_workflow_tools,
 )
-from pheno_mcp.tools.governance_tools import GOVERNANCE_TOOLS
+from pheno_mcp.tools.governance_tools import (
+    GOVERNANCE_TOOLS,
+    handle_ledger_query,
+    handle_ledger_verify,
+    register_governance_tools,
+)
 
 __all__ = [
     # Session tools
@@ -30,6 +36,10 @@ __all__ = [
     "handle_workflow_status",
     "handle_workflow_cancel",
     "handle_workflow_list",
+    "register_workflow_tools",
     # Governance tools
     "GOVERNANCE_TOOLS",
+    "handle_ledger_query",
+    "handle_ledger_verify",
+    "register_governance_tools",
 ]
