@@ -164,29 +164,3 @@ def register_governance_tools(server: Any) -> None:
                 handler=handler,
             )
         )
-
-
-# ---------------------------------------------------------------------
-# Server registration helpers
-# ---------------------------------------------------------------------
-
-
-def register_governance_tools(server: Any) -> None:
-    """Register all governance/ledger tools with an MCP server.
-
-    Args:
-        server: An MCP Server instance with register_tool method.
-    """
-    from pheno_mcp.server import Tool
-
-    for tool_def in GOVERNANCE_TOOLS:
-        handler_name = f"handle_{tool_def['name']}"
-        handler = globals().get(handler_name)
-        server.register_tool(
-            Tool(
-                name=tool_def["name"],
-                description=tool_def["description"],
-                input_schema=tool_def["input_schema"],
-                handler=handler,
-            )
-        )
