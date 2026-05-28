@@ -60,7 +60,8 @@ impl QdrantClient {
     pub async fn create_collection(&self, name: &str, vector_size: u64) -> Result<(), QdrantError> {
         let url = format!("{}/collections/{}", self.url, name);
 
-        let response = self.http
+        let response = self
+            .http
             .put(&url)
             .json(&serde_json::json!({
                 "vectors": {
@@ -77,7 +78,10 @@ impl QdrantClient {
             .map_err(|e| QdrantError::Http(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(QdrantError::Collection(format!("HTTP {}", response.status())));
+            return Err(QdrantError::Collection(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
 
         info!("Collection created: {}", name);
@@ -99,7 +103,8 @@ impl QdrantClient {
             })
             .collect();
 
-        let response = self.http
+        let response = self
+            .http
             .put(&url)
             .json(&serde_json::json!({ "points": payload }))
             .send()
@@ -115,10 +120,16 @@ impl QdrantClient {
     }
 
     /// Search vectors
-    pub async fn search(&self, collection: &str, query: &[f32], limit: usize) -> Result<Vec<SearchResult>, QdrantError> {
+    pub async fn search(
+        &self,
+        collection: &str,
+        query: &[f32],
+        limit: usize,
+    ) -> Result<Vec<SearchResult>, QdrantError> {
         let url = format!("{}/collections/{}/points/search", self.url, collection);
 
-        let response = self.http
+        let response = self
+            .http
             .post(&url)
             .json(&serde_json::json!({
                 "vector": query,
@@ -145,14 +156,18 @@ impl QdrantClient {
     pub async fn delete_collection(&self, name: &str) -> Result<(), QdrantError> {
         let url = format!("{}/collections/{}", self.url, name);
 
-        let response = self.http
+        let response = self
+            .http
             .delete(&url)
             .send()
             .await
             .map_err(|e| QdrantError::Http(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(QdrantError::Collection(format!("HTTP {}", response.status())));
+            return Err(QdrantError::Collection(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
 
         info!("Collection deleted: {}", name);
@@ -163,7 +178,8 @@ impl QdrantClient {
     pub async fn health(&self) -> Result<bool, QdrantError> {
         let url = format!("{}/health", self.url);
 
-        let response = self.http
+        let response = self
+            .http
             .get(&url)
             .send()
             .await

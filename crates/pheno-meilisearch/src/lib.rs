@@ -56,14 +56,17 @@ impl MeilisearchClient {
     }
 
     /// Create or update index
-    pub async fn create_index(&self, name: &str, primary_key: &str) -> Result<(), MeilisearchError> {
+    pub async fn create_index(
+        &self,
+        name: &str,
+        primary_key: &str,
+    ) -> Result<(), MeilisearchError> {
         let url = format!("{}/indexes", self.url);
 
-        let mut request = self.http.put(&url)
-            .json(&serde_json::json!({
-                "uid": name,
-                "primaryKey": primary_key
-            }));
+        let mut request = self.http.put(&url).json(&serde_json::json!({
+            "uid": name,
+            "primaryKey": primary_key
+        }));
 
         if let Some(ref key) = self.api_key {
             request = request.header("Authorization", format!("Bearer {}", key));
@@ -75,7 +78,10 @@ impl MeilisearchClient {
             .map_err(|e| MeilisearchError::Http(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(MeilisearchError::Index(format!("HTTP {}", response.status())));
+            return Err(MeilisearchError::Index(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
 
         info!("Index created/updated: {}", name);
@@ -83,11 +89,14 @@ impl MeilisearchClient {
     }
 
     /// Add documents
-    pub async fn add_documents(&self, index: &str, documents: Vec<Document>) -> Result<(), MeilisearchError> {
+    pub async fn add_documents(
+        &self,
+        index: &str,
+        documents: Vec<Document>,
+    ) -> Result<(), MeilisearchError> {
         let url = format!("{}/indexes/{}/documents", self.url, index);
 
-        let mut request = self.http.post(&url)
-            .json(&documents);
+        let mut request = self.http.post(&url).json(&documents);
 
         if let Some(ref key) = self.api_key {
             request = request.header("Authorization", format!("Bearer {}", key));
@@ -99,7 +108,10 @@ impl MeilisearchClient {
             .map_err(|e| MeilisearchError::Http(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(MeilisearchError::Http(format!("HTTP {}", response.status())));
+            return Err(MeilisearchError::Http(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
 
         debug!("Added {} documents to {}", documents.len(), index);
@@ -110,7 +122,9 @@ impl MeilisearchClient {
     pub async fn search(&self, index: &str, query: &str) -> Result<SearchResult, MeilisearchError> {
         let url = format!("{}/indexes/{}/search", self.url, index);
 
-        let mut request = self.http.post(&url)
+        let mut request = self
+            .http
+            .post(&url)
             .json(&serde_json::json!({ "q": query }));
 
         if let Some(ref key) = self.api_key {
@@ -123,7 +137,10 @@ impl MeilisearchClient {
             .map_err(|e| MeilisearchError::Http(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(MeilisearchError::Search(format!("HTTP {}", response.status())));
+            return Err(MeilisearchError::Search(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
 
         let result: SearchResult = response
@@ -131,8 +148,10 @@ impl MeilisearchClient {
             .await
             .map_err(|e| MeilisearchError::Http(e.to_string()))?;
 
-        debug!("Search returned {} hits in {}ms",
-            result.estimated_total_hits, result.processing_time_ms);
+        debug!(
+            "Search returned {} hits in {}ms",
+            result.estimated_total_hits, result.processing_time_ms
+        );
 
         Ok(result)
     }
@@ -153,7 +172,10 @@ impl MeilisearchClient {
             .map_err(|e| MeilisearchError::Http(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(MeilisearchError::Http(format!("HTTP {}", response.status())));
+            return Err(MeilisearchError::Http(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
 
         Ok(())
@@ -163,7 +185,8 @@ impl MeilisearchClient {
     pub async fn health(&self) -> Result<bool, MeilisearchError> {
         let url = format!("{}/health", self.url);
 
-        let response = self.http
+        let response = self
+            .http
             .get(&url)
             .send()
             .await
