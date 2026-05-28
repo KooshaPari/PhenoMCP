@@ -27,3 +27,12 @@ ci: lint test audit unused
 
 docs:
     cargo doc --no-deps --workspace
+
+# Python targets (run from repo root)
+python-test:
+    PYTHONPATH=python/src python -m pytest python/tests/ -q
+
+python-lint:
+    PYTHONPATH=python/src python -m mypy python/src/pheno_mcp/ --ignore-missing-imports
+
+python-all: python-test python-lint
