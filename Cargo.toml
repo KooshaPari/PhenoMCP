@@ -10,6 +10,9 @@ name = "pheno-mcp"
 path = "src/main.rs"
 
 [workspace]
+[workspace.package]
+
+rust-version = "1.75"
 members = ["crates/*"]
 resolver = "3"
 
