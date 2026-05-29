@@ -176,3 +176,29 @@ async def handle_workflow_list(_args: dict[str, Any]) -> dict[str, Any]:
                 "error": exc.response.text,
                 "status_code": exc.response.status_code,
             }
+
+
+# ---------------------------------------------------------------------
+# Server registration helpers
+# ---------------------------------------------------------------------
+
+
+def register_workflow_tools(server: Any) -> None:
+    """Register all workflow tools with an MCP server.
+
+    Args:
+        server: An MCP Server instance with register_tool method.
+    """
+    from pheno_mcp.server import Tool
+
+    for tool_def in WORKFLOW_TOOLS:
+        handler_name = f"handle_{tool_def['name']}"
+        handler = globals().get(handler_name)
+        server.register_tool(
+            Tool(
+                name=tool_def["name"],
+                description=tool_def["description"],
+                input_schema=tool_def["input_schema"],
+                handler=handler,
+            )
+        )
