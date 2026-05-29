@@ -19,6 +19,7 @@ from pheno_mcp.models import (
 from pheno_mcp.server import Prompt as ServerPrompt
 from pheno_mcp.server import Resource as ServerResource
 from pheno_mcp.server import Server, ServerConfig, Tool as ServerTool
+from pheno_mcp.server import create_configured_server
 
 __all__ = [
     "__version__",
@@ -31,4 +32,5 @@ __all__ = [
     "Server",
     "ServerConfig",
     "Tool",
+    "create_configured_server",
 ]
