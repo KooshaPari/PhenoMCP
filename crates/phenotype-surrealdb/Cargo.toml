@@ -7,6 +7,12 @@ license = "Apache-2.0"
 repository = "https://github.com/surrealdb/surrealdb"
 
 [dependencies]
+pheno-ports = { path = "../pheno-ports" }
+async-trait = "0.1"
+# TODO(surreal): swap to a real surrealdb driver when a persistent backend is
+# required.  For now PhenoSurreal delegates to the in-memory SkillStoragePort
+# double so the workspace compiles and tests pass without a running SurrealDB
+# instance.  Keep this dep pinned for future integration work.
 surrealdb = { version = "3.0", default-features = false, features = ["protocol-ws"] }
 tokio = { version = "1.44", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

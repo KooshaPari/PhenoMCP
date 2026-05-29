@@ -11,6 +11,7 @@ path = "src/main.rs"
 
 [workspace]
 members = [
+  "crates/pheno-ports",
   "crates/pheno-meilisearch",
   "crates/pheno-qdrant",
   "crates/phenotype-surrealdb"
