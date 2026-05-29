@@ -2,7 +2,7 @@
 
 **Scope:** Backfilled catalog for Tracera + AgilePlus ingestion.
 **Schema version:** 1.
-**Test baseline:** 204 Python tests + 19 Rust tests = 223 total passing (2026-05-29).
+**Test baseline:** 212 Python tests (+ 2 skipped on Python 3.14a) + 19 Rust tests = 231 total passing (2026-05-29).
 **ID namespace:** FR-MCP-NNN / NFR-MCP-NNN.
 
 ---
@@ -311,6 +311,47 @@ real SurrealDB driver swap.
 
 ---
 
+### FR-MCP-013 — MCP Transport Binding (stdio / HTTP) — SHIPPED
+
+**Title:** `build_fastmcp_bridge` + `run_stdio` expose the configured server over a real MCP transport so any MCP client can connect.
+
+**Description:** `python/src/pheno_mcp/transport.py` provides:
+
+- `build_fastmcp_bridge(server)` — wraps a pheno_mcp `Server` in a `FastMCP`
+  instance.  Every registered `Tool` is re-exposed on the `FastMCP` server as
+  an async handler that delegates to `server.handle_request("tools/call", ...)`.
+  FastMCP handles all wire framing (JSON-RPC init, capabilities negotiation,
+  `tools/list` advertising, request routing).
+- `run_stdio(config?)` — synchronous convenience function that builds a fully
+  configured server and calls `FastMCP.run(transport="stdio")`.  This is the
+  function invoked by `python -m pheno_mcp`.
+- `run_stdio_async(config?)` — async variant for embedding in test harnesses.
+
+`python/src/pheno_mcp/__main__.py` provides the `main()` entry point so the
+server is launchable as `python -m pheno_mcp`.  The `pyproject.toml`
+`[project.scripts]` table registers a `pheno-mcp` console script pointing at
+`pheno_mcp.__main__:main`.
+
+The `mcp>=1.27` dependency is declared in `pyproject.toml` and resolved via
+`uv.lock`.  The `mcp` import is lazy (inside `build_fastmcp_bridge`) to avoid
+import-time segfaults on Python 3.14 alpha builds where pydantic-core's C
+extension has an ABI mismatch.
+
+**Acceptance criteria:**
+- `from pheno_mcp.transport import build_fastmcp_bridge, run_stdio, run_stdio_async` succeeds.
+- `build_fastmcp_bridge(create_configured_server())` registers all 8 tools on a FastMCP instance.
+- `run_stdio` is a synchronous callable; `run_stdio_async` is an async coroutine function.
+- `python -m pheno_mcp` entrypoint imports and exposes `main()`.
+- `build_fastmcp_bridge, run_stdio, run_stdio_async` are re-exported from `pheno_mcp.__init__`.
+- On Python builds where `mcp` is importable: an in-memory `ClientSession` can call `list_tools` and `call_tool` end-to-end via the bridge.
+
+**Traceability:**
+- PLAN-MCP-006 → SHIPPED
+- PR feat/mcp-transport
+- Tests: `python/tests/test_transport.py`
+
+---
+
 ## Non-Functional Requirements
 
 ### NFR-MCP-001 — Object-Safe Port Traits
@@ -409,6 +450,7 @@ are required CI steps.
 | `test_workflow_tools.py` | FR-MCP-007 |
 | `test_configured_server.py` | FR-MCP-008 |
 | `test_client.py`, `test_client_connected.py` | FR-MCP-001 (Client symbol) |
+| `test_transport.py` | FR-MCP-013 |
 | `test_models.py`, `test_models_edge_cases.py` | FR-MCP-002 (domain types) |
 | `doubles.rs :: search_double_*` | FR-MCP-009, NFR-MCP-001 |
 | `pheno-qdrant :: test_build_*`, `test_qdrant_client_is_search_port` | FR-MCP-012, NFR-MCP-001 |
@@ -426,6 +468,6 @@ are required CI steps.
 | PLAN-MCP-003 | pheno-meilisearch SearchPort adapter | `crates/pheno-meilisearch/` exists (stub); needs `SearchPort` impl backed by `meilisearch-sdk` |
 | PLAN-MCP-004 | Additional Parpoura tool bundles | Only governance/session/workflow wired; agent, knowledge, policy tool groups are PLANNED epics |
 | PLAN-MCP-005 | MCP ↔ Claude SDK contract hardening | No schema-level validation between MCP request shape and SDK client expectations; property-based tests needed |
-| PLAN-MCP-006 | Transport layer (stdio / HTTP / WS) | `Server.handle_request` has no transport binding yet; wire to FastMCP transport adapters |
+| ~~PLAN-MCP-006~~ | ~~Transport layer (stdio / HTTP / WS)~~ | **SHIPPED** → FR-MCP-013; `build_fastmcp_bridge` wraps configured Server over FastMCP stdio transport; `python -m pheno_mcp` entrypoint; 8 unit tests green |
 | PLAN-MCP-007 | Resource + Prompt handler end-to-end | Registration is wired; no Parpoura-backed handlers exist for `resources/read` or `prompts/get` |
 | PLAN-MCP-008 | FR coverage matrix auto-update | `docs/reference/fr_coverage_matrix.md` is empty; auto-population from test annotations needed |

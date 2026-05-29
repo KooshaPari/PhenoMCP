@@ -20,6 +20,7 @@ from pheno_mcp.server import Prompt as ServerPrompt
 from pheno_mcp.server import Resource as ServerResource
 from pheno_mcp.server import Server, ServerConfig, Tool as ServerTool
 from pheno_mcp.server import create_configured_server
+from pheno_mcp.transport import build_fastmcp_bridge, run_stdio, run_stdio_async
 
 __all__ = [
     "__version__",
@@ -32,5 +33,8 @@ __all__ = [
     "Server",
     "ServerConfig",
     "Tool",
+    "build_fastmcp_bridge",
     "create_configured_server",
+    "run_stdio",
+    "run_stdio_async",
 ]
