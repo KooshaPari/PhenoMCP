@@ -1,4 +1,10 @@
 name: CodeQL (Rust)
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 on:
   push:
@@ -12,7 +18,7 @@ on:
 jobs:
   analyze:
     name: Analyze (rust)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 360
     permissions:
       actions: read
@@ -20,7 +26,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       - name: Initialize CodeQL
         uses: github/codeql-action/init@865f5f5c36632f18690a3d569fa0a764f2da0c3e
         with:

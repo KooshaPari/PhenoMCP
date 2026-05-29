@@ -58,6 +58,13 @@ default_stages: [pre-commit]
 fail_fast: false
 minimum_pre_commit_version: 2.15.0
 
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-all]
+        types: [python]
+
 exclude: |
   (?x)^(
     \.git/|

@@ -1,4 +1,8 @@
 name: OpenSSF Scorecard
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   branch_protection_rule:
   schedule:
@@ -11,7 +15,7 @@ permissions: read-all
 jobs:
   analysis:
     name: Scorecard analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       security-events: write
       id-token: write
@@ -23,7 +27,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a
+      - uses: ossf/scorecard-action@99c09fe975337306107572b4fdf4db224cf8e2f2
         with:
           results_file: results.sarif
           results_format: sarif
