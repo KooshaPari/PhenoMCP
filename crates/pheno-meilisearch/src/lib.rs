@@ -2,7 +2,12 @@
 //!
 //! Meilisearch is a typo-tolerant, fast search engine.
 //! 10x simpler than Elasticsearch, MIT licensed.
+//!
+//! Implements [`pheno_ports::SearchPort`] so that MCPServer can consume
+//! this adapter polymorphically.
 
+use async_trait::async_trait;
+use pheno_ports::{SearchDocument, SearchPort, SearchPortError, SearchResults};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -196,6 +201,74 @@ impl MeilisearchClient {
     }
 }
 
+// ── SearchPort implementation ──────────────────────────────────────────────
+
+/// Map a [`MeilisearchError`] to the generic [`SearchPortError`].
+fn to_port_err(e: MeilisearchError) -> SearchPortError {
+    match e {
+        MeilisearchError::Http(s) => SearchPortError::Transport(s),
+        MeilisearchError::Index(s) => SearchPortError::Index(s),
+        MeilisearchError::Search(s) => SearchPortError::Search(s),
+    }
+}
+
+#[async_trait]
+impl SearchPort for MeilisearchClient {
+    async fn ensure_index(
+        &self,
+        index: &str,
+        primary_key: &str,
+    ) -> Result<(), SearchPortError> {
+        self.create_index(index, primary_key)
+            .await
+            .map_err(to_port_err)
+    }
+
+    async fn index_documents(
+        &self,
+        index: &str,
+        documents: Vec<SearchDocument>,
+    ) -> Result<(), SearchPortError> {
+        // Map pheno-ports SearchDocument → local Document (same shape)
+        let docs: Vec<Document> = documents
+            .into_iter()
+            .map(|d| Document {
+                id: d.id,
+                fields: d.fields,
+            })
+            .collect();
+        self.add_documents(index, docs).await.map_err(to_port_err)
+    }
+
+    async fn search(
+        &self,
+        index: &str,
+        query: &str,
+    ) -> Result<SearchResults, SearchPortError> {
+        // Call the inherent `search` method explicitly to avoid recursion.
+        let result = MeilisearchClient::search(self, index, query)
+            .await
+            .map_err(to_port_err)?;
+        Ok(SearchResults {
+            hits: result.hits,
+            estimated_total_hits: result.estimated_total_hits,
+            processing_time_ms: result.processing_time_ms,
+            query: result.query,
+        })
+    }
+
+    async fn delete_document(
+        &self,
+        index: &str,
+        id: &str,
+    ) -> Result<(), SearchPortError> {
+        // Call the inherent `delete_document` method explicitly.
+        MeilisearchClient::delete_document(self, index, id)
+            .await
+            .map_err(to_port_err)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,5 +277,12 @@ mod tests {
     async fn test_meilisearch_client_creation() {
         let client = MeilisearchClient::new("http://localhost:7700", Some("masterkey"));
         assert!(client.health().await.is_ok() || true); // Will fail without server
+    }
+
+    /// Verify object-safety: MeilisearchClient can be boxed as SearchPort.
+    #[tokio::test]
+    async fn test_meilisearch_client_is_search_port() {
+        let _: Box<dyn pheno_ports::SearchPort> =
+            Box::new(MeilisearchClient::new("http://localhost:7700", None));
     }
 }
