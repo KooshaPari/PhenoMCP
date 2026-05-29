@@ -9,13 +9,11 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use async_trait::async_trait;
-use serde_json::json;
 
-use crate::{
-    SearchDocument, SearchPortError, SearchResults, SkillEntry, SkillStoragePort,
-    StoragePortError,
-};
 use crate::SearchPort;
+use crate::{
+    SearchDocument, SearchPortError, SearchResults, SkillEntry, SkillStoragePort, StoragePortError,
+};
 
 // ── InMemorySearchStore ────────────────────────────────────────────────────
 
@@ -38,11 +36,7 @@ impl InMemorySearchStore {
 
 #[async_trait]
 impl SearchPort for InMemorySearchStore {
-    async fn ensure_index(
-        &self,
-        index: &str,
-        _primary_key: &str,
-    ) -> Result<(), SearchPortError> {
+    async fn ensure_index(&self, index: &str, _primary_key: &str) -> Result<(), SearchPortError> {
         let mut guard = self.inner.lock().await;
         guard.entry(index.to_string()).or_default();
         Ok(())
@@ -61,11 +55,7 @@ impl SearchPort for InMemorySearchStore {
         Ok(())
     }
 
-    async fn search(
-        &self,
-        index: &str,
-        query: &str,
-    ) -> Result<SearchResults, SearchPortError> {
+    async fn search(&self, index: &str, query: &str) -> Result<SearchResults, SearchPortError> {
         let guard = self.inner.lock().await;
         let hits: Vec<serde_json::Value> = guard
             .get(index)
@@ -73,11 +63,8 @@ impl SearchPort for InMemorySearchStore {
                 store
                     .values()
                     // naive substring match — good enough for test doubles
-                    .filter(|doc| {
-                        doc.id.contains(query)
-                            || doc.fields.to_string().contains(query)
-                    })
-                    .map(|doc| json!({"id": doc.id, "fields": doc.fields}))
+                    .filter(|doc| doc.id.contains(query) || doc.fields.to_string().contains(query))
+                    .map(|doc| serde_json::to_value(doc).unwrap())
                     .collect()
             })
             .unwrap_or_default();
@@ -91,11 +78,7 @@ impl SearchPort for InMemorySearchStore {
         })
     }
 
-    async fn delete_document(
-        &self,
-        index: &str,
-        id: &str,
-    ) -> Result<(), SearchPortError> {
+    async fn delete_document(&self, index: &str, id: &str) -> Result<(), SearchPortError> {
         let mut guard = self.inner.lock().await;
         if let Some(store) = guard.get_mut(index) {
             store.remove(id);

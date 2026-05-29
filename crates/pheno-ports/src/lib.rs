@@ -79,11 +79,7 @@ pub enum StoragePortError {
 #[async_trait]
 pub trait SearchPort: Send + Sync {
     /// Ensure the named index exists with the given primary key field.
-    async fn ensure_index(
-        &self,
-        index: &str,
-        primary_key: &str,
-    ) -> Result<(), SearchPortError>;
+    async fn ensure_index(&self, index: &str, primary_key: &str) -> Result<(), SearchPortError>;
 
     /// Add or replace documents in the index.
     async fn index_documents(
@@ -93,18 +89,10 @@ pub trait SearchPort: Send + Sync {
     ) -> Result<(), SearchPortError>;
 
     /// Run a full-text search query against the index.
-    async fn search(
-        &self,
-        index: &str,
-        query: &str,
-    ) -> Result<SearchResults, SearchPortError>;
+    async fn search(&self, index: &str, query: &str) -> Result<SearchResults, SearchPortError>;
 
     /// Remove a single document by its id.
-    async fn delete_document(
-        &self,
-        index: &str,
-        id: &str,
-    ) -> Result<(), SearchPortError>;
+    async fn delete_document(&self, index: &str, id: &str) -> Result<(), SearchPortError>;
 }
 
 // ── Port trait: SkillStoragePort ───────────────────────────────────────────
