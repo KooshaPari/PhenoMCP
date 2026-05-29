@@ -2,8 +2,17 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from pheno_mcp.server import Prompt, Resource, Server, ServerConfig, Tool
+
+
+def _assert_jsonrpc_error(result: dict, code: int, message: str) -> None:
+    assert result["jsonrpc"] == "2.0"
+    assert result["id"] is None
+    assert result["error"]["code"] == code
+    assert result["error"]["message"] == message
 
 
 class TestServer:
@@ -78,8 +87,9 @@ class TestServer:
     async def test_handle_request_unknown_method(self) -> None:
         """Test handling unknown request method."""
         server = Server()
-        with pytest.raises(ValueError, match="Unknown method"):
-            await server.handle_request("unknown/method")
+        result = await server.handle_request("unknown/method")
+        _assert_jsonrpc_error(result, -32601, "Method not found")
+        assert result["error"]["data"]["method"] == "unknown/method"
 
 
 class TestTool:
@@ -181,25 +191,30 @@ class TestServerIntegration:
         )
         server.register_tool(tool)
 
-        result = await server.handle_request("tools/call", {"name": "echo", "arguments": {"value": 42}})
+        result = await server.handle_request(
+            "tools/call", {"name": "echo", "arguments": {"value": 42}}
+        )
         assert result == {"echoed": {"value": 42}}
 
     @pytest.mark.asyncio
     async def test_handle_request_tools_call_unknown_tool(self) -> None:
-        """Test tools/call with unknown tool raises error."""
+        """Test tools/call with unknown tool returns a structured error."""
         server = Server()
-        with pytest.raises(ValueError, match="Unknown tool"):
-            await server.handle_request("tools/call", {"name": "nonexistent"})
+        result = await server.handle_request("tools/call", {"name": "nonexistent"})
+        _assert_jsonrpc_error(result, -32601, "Method not found")
+        assert result["error"]["data"]["tool"] == "nonexistent"
 
     @pytest.mark.asyncio
     async def test_handle_request_prompts_list(self) -> None:
         """Test handling prompts/list request."""
         server = Server()
-        server.register_prompt(Prompt(
-            name="greet",
-            description="Generate greeting",
-            arguments=[{"name": "name", "type": "string"}],
-        ))
+        server.register_prompt(
+            Prompt(
+                name="greet",
+                description="Generate greeting",
+                arguments=[{"name": "name", "type": "string"}],
+            )
+        )
         result = await server.handle_request("prompts/list")
         assert "prompts" in result
         assert len(result["prompts"]) == 1
@@ -243,8 +258,46 @@ class TestServerErrorHandling:
     async def test_handle_request_invalid_params_type(self) -> None:
         """Test handling request with invalid params type."""
         server = Server()
-        result = await server.handle_request("tools/list")
-        assert "tools" in result
+        invalid_params: Any = ["not", "an", "object"]
+        result = await server.handle_request("tools/call", invalid_params)
+        _assert_jsonrpc_error(result, -32600, "Invalid request")
+        assert result["error"]["data"]["reason"] == "params must be an object"
+
+    @pytest.mark.asyncio
+    async def test_handle_request_tools_call_invalid_name(self) -> None:
+        """Test tools/call with a malformed tool name returns an error object."""
+        server = Server()
+        result = await server.handle_request("tools/call", {"name": "   "})
+        _assert_jsonrpc_error(result, -32602, "Invalid params")
+        assert (
+            result["error"]["data"]["reason"] == "tool name must be a non-empty string"
+        )
+
+    @pytest.mark.asyncio
+    async def test_handle_request_tools_call_invalid_arguments(self) -> None:
+        """Test tools/call with invalid arguments returns an error object."""
+        server = Server()
+        server.register_tool(Tool(name="echo", description="Echo"))
+        result = await server.handle_request(
+            "tools/call", {"name": "echo", "arguments": "bad"}
+        )
+        _assert_jsonrpc_error(result, -32602, "Invalid params")
+        assert result["error"]["data"]["reason"] == "arguments must be an object"
+
+    @pytest.mark.asyncio
+    async def test_handle_request_tools_call_handler_exception(self) -> None:
+        """Test tool handler exceptions are converted into error objects."""
+        server = Server()
+
+        def exploding_handler(_: dict) -> dict:
+            raise RuntimeError("boom")
+
+        server.register_tool(
+            Tool(name="explode", description="Explode", handler=exploding_handler)
+        )
+        result = await server.handle_request("tools/call", {"name": "explode"})
+        _assert_jsonrpc_error(result, -32603, "Internal error")
+        assert result["error"]["data"]["tool"] == "explode"
 
     def test_tool_overwrite(self) -> None:
         """Test overwriting an existing tool."""
