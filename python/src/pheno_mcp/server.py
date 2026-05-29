@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 from dataclasses import dataclass, field
 from typing import Any
+
+
+JSONRPC_VERSION = "2.0"
+JSONRPC_INVALID_REQUEST = -32600
+JSONRPC_METHOD_NOT_FOUND = -32601
+JSONRPC_INVALID_PARAMS = -32602
+JSONRPC_INTERNAL_ERROR = -32603
 
 
 @dataclass
@@ -199,11 +207,23 @@ class Server:
         Returns:
             Request result.
 
-        Raises:
-            ValueError: If the method is unknown.
+        Errors are returned as JSON-RPC-style error objects instead of raising.
         """
+        if not isinstance(method, str) or not method.strip():
+            return self._error_response(
+                JSONRPC_INVALID_REQUEST,
+                "Invalid request",
+                {"reason": "method must be a non-empty string"},
+            )
+
         if params is None:
             params = {}
+        elif not isinstance(params, dict):
+            return self._error_response(
+                JSONRPC_INVALID_REQUEST,
+                "Invalid request",
+                {"reason": "params must be an object"},
+            )
 
         if method == "tools/list":
             return {"tools": self.list_tools()}
@@ -217,7 +237,11 @@ class Server:
         if method == "tools/call":
             return await self._handle_tools_call(params)
 
-        raise ValueError(f"Unknown method: {method}")
+        return self._error_response(
+            JSONRPC_METHOD_NOT_FOUND,
+            "Method not found",
+            {"method": method},
+        )
 
     async def _handle_tools_call(self, params: dict[str, Any]) -> Any:
         """Handle a tools/call request.
@@ -226,25 +250,67 @@ class Server:
             params: The request parameters containing 'name' and 'arguments'.
 
         Returns:
-            Tool execution result, or None if the tool is not found or has no handler.
+            Tool execution result, or a JSON-RPC-style error object on failure.
         """
+        if not isinstance(params, dict):
+            return self._error_response(
+                JSONRPC_INVALID_REQUEST,
+                "Invalid request",
+                {"reason": "params must be an object"},
+            )
+
         name = params.get("name")
-        if not name:
-            return None
+        if not isinstance(name, str) or not name.strip():
+            return self._error_response(
+                JSONRPC_INVALID_PARAMS,
+                "Invalid params",
+                {"reason": "tool name must be a non-empty string"},
+            )
 
         arguments = params.get("arguments") or {}
+        if not isinstance(arguments, dict):
+            return self._error_response(
+                JSONRPC_INVALID_PARAMS,
+                "Invalid params",
+                {"reason": "arguments must be an object", "tool": name},
+            )
 
         if name not in self._tools:
-            raise ValueError(f"Unknown tool: {name}")
+            return self._error_response(
+                JSONRPC_METHOD_NOT_FOUND,
+                "Method not found",
+                {"tool": name},
+            )
 
         tool = self._tools[name]
 
         if tool.handler is None:
             return None
 
-        if asyncio.iscoroutinefunction(tool.handler):
-            return await tool.handler(arguments)
-        return tool.handler(arguments)
+        try:
+            if inspect.iscoroutinefunction(tool.handler):
+                return await tool.handler(arguments)
+            return tool.handler(arguments)
+        except Exception as exc:  # pragma: no cover - defensive guard
+            return self._error_response(
+                JSONRPC_INTERNAL_ERROR,
+                "Internal error",
+                {"tool": name, "detail": str(exc)},
+            )
+
+    @staticmethod
+    def _error_response(
+        code: int, message: str, data: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Create a JSON-RPC-style error response."""
+        error: dict[str, Any] = {"code": code, "message": message}
+        if data is not None:
+            error["data"] = data
+        return {
+            "jsonrpc": JSONRPC_VERSION,
+            "error": error,
+            "id": None,
+        }
 
 
 def create_configured_server(config: ServerConfig | None = None) -> "Server":

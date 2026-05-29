@@ -6,6 +6,13 @@ import pytest
 from pheno_mcp.server import Prompt, Resource, Server, ServerConfig, Tool
 
 
+def _assert_jsonrpc_error(result: dict, code: int, message: str) -> None:
+    assert result["jsonrpc"] == "2.0"
+    assert result["id"] is None
+    assert result["error"]["code"] == code
+    assert result["error"]["message"] == message
+
+
 class TestServerComprehensive:
     """Comprehensive tests for Server class."""
 
@@ -102,7 +109,9 @@ class TestServerRequestHandling:
         server.register_prompt(Prompt(name="greet", description="Generate greeting"))
         return server
 
-    async def test_handle_request_prompts_list(self, server_with_prompts: Server) -> None:
+    async def test_handle_request_prompts_list(
+        self, server_with_prompts: Server
+    ) -> None:
         """Test handling prompts/list request."""
         result = await server_with_prompts.handle_request("prompts/list")
         assert "prompts" in result
@@ -135,25 +144,32 @@ class TestServerRequestHandling:
     async def test_handle_request_tools_call_unknown_tool(
         self, server_with_tools: Server
     ) -> None:
-        """Test calling unknown tool raises ValueError."""
-        with pytest.raises(ValueError, match="Unknown tool"):
-            await server_with_tools.handle_request(
-                "tools/call", {"name": "nonexistent", "arguments": {}}
-            )
+        """Test calling unknown tool returns a JSON-RPC error object."""
+        result = await server_with_tools.handle_request(
+            "tools/call", {"name": "nonexistent", "arguments": {}}
+        )
+        _assert_jsonrpc_error(result, -32601, "Method not found")
+        assert result["error"]["data"]["tool"] == "nonexistent"
 
     async def test_handle_request_tools_call_no_name_returns_none(
         self, server_with_tools: Server
     ) -> None:
-        """Test calling tool without name in params returns None."""
+        """Test calling tool without name in params returns an error object."""
         result = await server_with_tools.handle_request("tools/call", {})
-        assert result is None
+        _assert_jsonrpc_error(result, -32602, "Invalid params")
+        assert (
+            result["error"]["data"]["reason"] == "tool name must be a non-empty string"
+        )
 
     async def test_handle_request_tools_call_no_params(
         self, server_with_tools: Server
     ) -> None:
-        """Test calling tool with no params returns None."""
+        """Test calling tool with no params returns an error object."""
         result = await server_with_tools.handle_request("tools/call")
-        assert result is None
+        _assert_jsonrpc_error(result, -32602, "Invalid params")
+        assert (
+            result["error"]["data"]["reason"] == "tool name must be a non-empty string"
+        )
 
     async def test_handle_request_with_none_params(
         self, server_with_tools: Server
@@ -209,6 +225,7 @@ class TestToolWithHandler:
 
     async def test_tool_handler_returns_complex_result(self) -> None:
         """Test tool handler can return complex results."""
+
         async def complex_handler(args: dict) -> dict:
             return {
                 "status": "success",
@@ -216,7 +233,9 @@ class TestToolWithHandler:
             }
 
         server = Server()
-        tool = Tool(name="complex", description="Return complex", handler=complex_handler)
+        tool = Tool(
+            name="complex", description="Return complex", handler=complex_handler
+        )
         server.register_tool(tool)
 
         result = await server.handle_request(
