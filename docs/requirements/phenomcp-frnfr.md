@@ -227,6 +227,40 @@ object-safe Rust trait (`Box<dyn SearchPort>` compiles). Methods: `ensure_index(
 
 ---
 
+### FR-MCP-012 — pheno-qdrant SearchPort Adapter (SHIPPED)
+
+**Title:** `QdrantClient` implements `SearchPort` via thin REST client; no live server required for unit tests.
+
+**Description:** `crates/pheno-qdrant/src/lib.rs` provides `QdrantClient::new(url, api_key)` which
+implements `SearchPort` by bridging Qdrant's REST API:
+
+| `SearchPort` method   | Qdrant REST call                                      |
+|-----------------------|-------------------------------------------------------|
+| `ensure_index`        | `PUT /collections/{index}` (idempotent, 200/409 OK)   |
+| `index_documents`     | `PUT /collections/{index}/points` (zero-vector + payload) |
+| `search`              | `POST /collections/{index}/points/scroll` (payload `match.text` filter) |
+| `delete_document`     | `POST /collections/{index}/points/delete` (by `_pheno_id` filter) |
+
+Request-body construction (`build_create_collection_body`, `build_upsert_body`,
+`build_scroll_body`, `build_delete_body`) is extracted as pure functions and
+fully unit-tested without a live Qdrant.  Live-server tests are gated behind
+`#[ignore = "requires live Qdrant on localhost:6333"]`.
+
+**Acceptance criteria:**
+- `Box<dyn SearchPort> = Box::new(QdrantClient::new(...))` compiles (object-safety).
+- `build_upsert_body` serialises `SearchDocument.id` as both point id and `_pheno_id` payload field.
+- `build_scroll_body` emits a `should` filter with `match.text` clauses covering `name`, `content`, `text`, `_pheno_id`.
+- `build_delete_body` targets the `_pheno_id` payload field.
+- `cargo test -p pheno-qdrant` passes 8 unit tests; 3 live tests are `#[ignore]`d.
+- `cargo check --workspace` is clean (no errors, no warnings).
+
+**Traceability:**
+- PLAN-MCP-002 → SHIPPED
+- PR feat/qdrant-searchport
+- Tests: `crates/pheno-qdrant/src/lib.rs` (`test_build_*`, `test_qdrant_client_is_search_port`)
+
+---
+
 ### FR-MCP-010 — SkillStoragePort Hexagonal Port Trait (Rust)
 
 **Title:** Object-safe `SkillStoragePort` trait with `put / get / list / delete` for `SkillEntry` records.
@@ -377,6 +411,7 @@ are required CI steps.
 | `test_client.py`, `test_client_connected.py` | FR-MCP-001 (Client symbol) |
 | `test_models.py`, `test_models_edge_cases.py` | FR-MCP-002 (domain types) |
 | `doubles.rs :: search_double_*` | FR-MCP-009, NFR-MCP-001 |
+| `pheno-qdrant :: test_build_*`, `test_qdrant_client_is_search_port` | FR-MCP-012, NFR-MCP-001 |
 | `doubles.rs :: skill_store_*` | FR-MCP-010, NFR-MCP-001 |
 | `phenotype-surrealdb :: test_*` | FR-MCP-010, FR-MCP-011, NFR-MCP-001, NFR-MCP-005 |
 
@@ -387,7 +422,7 @@ are required CI steps.
 | ID | Title | Notes |
 |---|---|---|
 | PLAN-MCP-001 | Real SurrealDB client wiring | `TODO(surreal)` in `phenotype-surrealdb/src/lib.rs`; `surrealdb` crate already in `Cargo.toml`; only source swap needed |
-| PLAN-MCP-002 | pheno-qdrant SearchPort adapter | `crates/pheno-qdrant/` exists (stub); needs `SearchPort` impl backed by `qdrant_client` |
+| ~~PLAN-MCP-002~~ | ~~pheno-qdrant SearchPort adapter~~ | **SHIPPED** → FR-MCP-012; `QdrantClient` implements `SearchPort` via thin REST; 8 unit tests green |
 | PLAN-MCP-003 | pheno-meilisearch SearchPort adapter | `crates/pheno-meilisearch/` exists (stub); needs `SearchPort` impl backed by `meilisearch-sdk` |
 | PLAN-MCP-004 | Additional Parpoura tool bundles | Only governance/session/workflow wired; agent, knowledge, policy tool groups are PLANNED epics |
 | PLAN-MCP-005 | MCP ↔ Claude SDK contract hardening | No schema-level validation between MCP request shape and SDK client expectations; property-based tests needed |
