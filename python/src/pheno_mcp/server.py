@@ -245,3 +245,26 @@ class Server:
         if asyncio.iscoroutinefunction(tool.handler):
             return await tool.handler(arguments)
         return tool.handler(arguments)
+
+
+def create_configured_server(config: ServerConfig | None = None) -> "Server":
+    """Create a Server pre-loaded with all pheno_mcp tool bundles.
+
+    Registers governance, session, and workflow tools so callers get a
+    fully-wired instance without needing to import every register_* helper.
+
+    Args:
+        config: Optional server configuration; defaults are used when omitted.
+
+    Returns:
+        A Server instance with all tool bundles registered.
+    """
+    from pheno_mcp.tools.governance_tools import register_governance_tools
+    from pheno_mcp.tools.session_tools import register_session_tools
+    from pheno_mcp.tools.workflow_tools import register_workflow_tools
+
+    server = Server(config)
+    register_governance_tools(server)
+    register_session_tools(server)
+    register_workflow_tools(server)
+    return server
