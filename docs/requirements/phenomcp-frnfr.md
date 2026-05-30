@@ -2,7 +2,7 @@
 
 **Scope:** Backfilled catalog for Tracera + AgilePlus ingestion.
 **Schema version:** 1.
-**Test baseline:** 212 Python tests (+ 2 skipped on Python 3.14a) + 19 Rust tests = 231 total passing (2026-05-29).
+**Test baseline:** 260 Python tests (+ 2 skipped on Python 3.14a) + 19 Rust tests = 279 total passing (2026-05-29).
 **ID namespace:** FR-MCP-NNN / NFR-MCP-NNN.
 
 ---
@@ -181,19 +181,23 @@ HTTP errors are caught and returned as `{"error": ..., "status_code": ...}`.
 
 ### FR-MCP-008 — `create_configured_server` Factory
 
-**Title:** `create_configured_server(config?)` returns a fully-wired `Server` with all 8 tools pre-registered.
+**Title:** `create_configured_server(config?)` returns a fully-wired `Server` with all 19 tools pre-registered.
 
 **Description:** `server.py::create_configured_server` is a zero-boilerplate factory that
-instantiates a `Server` and calls `register_governance_tools`, `register_session_tools`,
-and `register_workflow_tools` in sequence. This gives callers a ready-to-use server with
-all 8 tools (`ledger_query`, `ledger_verify`, `session_suspend`, `session_resume`,
-`workflow_execute`, `workflow_status`, `workflow_cancel`, `workflow_list`) without
+instantiates a `Server` and calls `register_governance_tools`, `register_agent_tools`,
+`register_knowledge_tools`, `register_policy_tools`, `register_session_tools`, and
+`register_workflow_tools` in sequence. This gives callers a ready-to-use server with
+all 19 tools (`ledger_query`, `ledger_verify`, `agent_create`, `agent_list`,
+`agent_get`, `agent_delete`, `knowledge_store`, `knowledge_retrieve`,
+`knowledge_search`, `knowledge_delete`, `policy_list`, `policy_get`,
+`policy_evaluate`, `session_suspend`, `session_resume`, `workflow_execute`,
+`workflow_status`, `workflow_cancel`, `workflow_list`) without
 importing individual bundle modules.
 
 **Acceptance criteria:**
-- `create_configured_server()` returns a `Server` with exactly 8 tools registered.
+- `create_configured_server()` returns a `Server` with exactly 19 tools registered.
 - `create_configured_server(ServerConfig(name="test"))` propagates the config to the server.
-- Returned server handles `tools/list` and returns all 8 tool names.
+- Returned server handles `tools/list` and returns all 19 tool names.
 - No exception raised on construction with default config.
 
 **Traceability:**
@@ -287,27 +291,28 @@ object-safe trait. `SkillEntry` fields: `id`, `name`, `version`, `code`, `runtim
 
 ---
 
-### FR-MCP-011 — phenotype-surrealdb SkillStoragePort Adapter (Stub)
+### FR-MCP-014 — phenotype-surrealdb SkillStoragePort Adapter (SHIPPED)
 
-**Title:** `PhenoSurreal` implements `SkillStoragePort` via in-memory delegation pending real SurrealDB wiring.
+**Title:** `PhenoSurreal` implements `SkillStoragePort` via real SurrealDB local engines with schema bootstrap.
 
 **Description:** `crates/phenotype-surrealdb/src/lib.rs` provides `PhenoSurreal::new(path)`
-which implements `SkillStoragePort` by delegating to `InMemorySkillStore`. The `path`
-parameter is accepted for forward-compatibility but not yet used. Legacy helpers
-`store_skill`, `query_skills`, and `store_embedding` are preserved for callers that
-pre-date the port trait. A `TODO(surreal)` comment marks the delegation site for the
-real SurrealDB driver swap.
+which connects to `surrealdb::Surreal<surrealdb::engine::local::Db>`, selects a fixed
+namespace/database, and bootstraps `skills` as a `SCHEMAFULL` table. `path` controls the
+embedded engine: `mem://` selects `Mem`, while all other paths use `SurrealKv`. Legacy
+helpers `store_skill`, `query_skills`, and `store_embedding` are preserved for callers
+that pre-date the port trait. Fast unit tests use `mem://`; ignored tests cover the live
+SurrealKv path.
 
 **Acceptance criteria:**
-- `PhenoSurreal::new(path).await` succeeds without a running SurrealDB instance.
+- `PhenoSurreal::new("mem://").await` succeeds without external services.
 - `Box<dyn SkillStoragePort> = Box::new(PhenoSurreal::new(...).await.unwrap())` compiles.
-- Legacy `store_skill` round-trips correctly via `store_skill` → `query_skills`.
-- `SkillStoragePort::put/get/list/delete` all work correctly via in-memory delegation.
-- `store_embedding` returns an `EmbeddingRecord` with a prefixed id (stub).
+- `SkillStoragePort::put/get/list/delete` work through the SurrealDB API.
+- `skills` is created as a `SCHEMAFULL` table with typed fields.
+- Ignored tests exercise the local SurrealKv path for round-trip and delete coverage.
 
 **Traceability:**
-- PR #81 (SurrealDB stub introduced alongside port traits)
-- Tests: `crates/phenotype-surrealdb/src/lib.rs` (all `#[tokio::test]` functions)
+- PLAN-MCP-001 → SHIPPED
+- Tests: `crates/phenotype-surrealdb/src/lib.rs` (all non-ignored `#[tokio::test]` functions)
 
 ---
 
@@ -339,7 +344,7 @@ extension has an ABI mismatch.
 
 **Acceptance criteria:**
 - `from pheno_mcp.transport import build_fastmcp_bridge, run_stdio, run_stdio_async` succeeds.
-- `build_fastmcp_bridge(create_configured_server())` registers all 8 tools on a FastMCP instance.
+- `build_fastmcp_bridge(create_configured_server())` registers all 19 tools on a FastMCP instance.
 - `run_stdio` is a synchronous callable; `run_stdio_async` is an async coroutine function.
 - `python -m pheno_mcp` entrypoint imports and exposes `main()`.
 - `build_fastmcp_bridge, run_stdio, run_stdio_async` are re-exported from `pheno_mcp.__init__`.
@@ -349,6 +354,32 @@ extension has an ABI mismatch.
 - PLAN-MCP-006 → SHIPPED
 - PR feat/mcp-transport
 - Tests: `python/tests/test_transport.py`
+
+---
+
+### FR-MCP-015 — Additional Parpoura Tool Bundles (agent, knowledge, policy)
+
+**Title:** `agent_tools`, `knowledge_tools`, and `policy_tools` expose 11 additional MCP tools backed by Parpoura API.
+
+**Description:** `python/src/pheno_mcp/tools/agent_tools.py`,
+`python/src/pheno_mcp/tools/knowledge_tools.py`, and
+`python/src/pheno_mcp/tools/policy_tools.py` define:
+`agent_create`, `agent_list`, `agent_get`, `agent_delete`;
+`knowledge_store`, `knowledge_retrieve`, `knowledge_search`, `knowledge_delete`; and
+`policy_list`, `policy_get`, `policy_evaluate`.
+The bundles follow the same `PARPOURA_BASE_URL` env-var pattern as the existing tool modules and return HTTP failures as `{"error": ..., "status_code": ...}` instead of raising.
+`register_agent_tools(server)`, `register_knowledge_tools(server)`, and `register_policy_tools(server)` wire all 11 tools onto any `Server` instance.
+
+**Acceptance criteria:**
+- `agent_create` uses `POST /api/v1/agents`; `agent_list` uses `GET /api/v1/agents`; `agent_get` uses `GET /api/v1/agents/{agent_id}`; `agent_delete` uses `DELETE /api/v1/agents/{agent_id}`.
+- `knowledge_store` uses `POST /api/v1/knowledge`; `knowledge_retrieve` uses `GET /api/v1/knowledge/{knowledge_id}`; `knowledge_search` uses `GET /api/v1/knowledge/search`; `knowledge_delete` uses `DELETE /api/v1/knowledge/{knowledge_id}`.
+- `policy_list` uses `GET /api/v1/policies`; `policy_get` uses `GET /api/v1/policies/{policy_id}`; `policy_evaluate` uses `POST /api/v1/policies/evaluate`.
+- Each handler returns parsed JSON on success and `{"error": ..., "status_code": N}` for HTTP failures.
+- `register_agent_tools(server)`, `register_knowledge_tools(server)`, and `register_policy_tools(server)` make all 11 tools visible in `server.list_tools()`.
+
+**Traceability:**
+- PLAN-MCP-004 → SHIPPED
+- Tests: `python/tests/test_agent_tools.py`, `python/tests/test_knowledge_tools.py`, `python/tests/test_policy_tools.py`
 
 ---
 
@@ -397,30 +428,32 @@ covers handler-exception path.
 
 ---
 
-### NFR-MCP-004 — Test Suite Coverage (223+ Tests Green)
+### NFR-MCP-004 — Test Suite Coverage (279 Tests Green)
 
-**Title:** All 223 tests (204 Python + 19 Rust) pass on every merge to `main`.
+**Title:** All 279 tests (260 Python + 19 Rust) pass on every merge to `main`.
 
-**Description:** CI must run `uv run pytest python/` (≥ 204 passing) and
+**Description:** CI must run `uv run pytest python/` (260 passing, 2 skipped on Python 3.14a) and
 `cargo test --workspace` (≥ 19 passing) on every PR. Failures block merge.
 Test files trace to at least one FR via naming convention (`test_governance_tools.py` → FR-MCP-005, etc.).
 
-**Evidence:** `uv run pytest` output: `204 passed in 2.23s`; `cargo test --workspace` output:
+**Evidence:** `uv run pytest` output: `260 passed, 2 skipped in 2.94s`; `cargo test --workspace` output:
 `19 passed` across `pheno-ports` (11) + `phenotype-surrealdb` (5) + `pheno-meilisearch` (2) + `pheno_mcp` crate (1).
 
 ---
 
-### NFR-MCP-005 — SurrealDB Stub Annotated with TODO
+### NFR-MCP-005 — SurrealDB Local-Engine Wiring
 
-**Title:** The in-memory SurrealDB stub is clearly labelled as temporary and upgrade path documented.
+**Title:** `phenotype-surrealdb` uses real SurrealDB local engines with a clear mem-vs-persistent split.
 
-**Description:** `phenotype-surrealdb/src/lib.rs` carries a `TODO(surreal)` comment at every
-site where the real `surrealdb::Surreal<…>` driver replaces in-memory delegation. The `surrealdb`
-crate dependency is already declared in `Cargo.toml` so the swap requires only source changes,
-not a dependency addition. Existing callers compile and test against the stub without modification.
+**Description:** `phenotype-surrealdb/src/lib.rs` now connects through
+`surrealdb::Surreal<surrealdb::engine::local::Db>`, bootstraps the `skills` table as
+`SCHEMAFULL`, and routes `mem://` to `Mem` while all other paths use `SurrealKv`.
+This keeps unit tests fast and deterministic while still supporting a persistent local
+engine path for ignored live coverage.
 
-**Evidence:** `TODO(surreal)` annotations in `crates/phenotype-surrealdb/src/lib.rs` (two sites);
-`surrealdb` listed in workspace `Cargo.toml`; PR #81 description.
+**Evidence:** `crates/phenotype-surrealdb/src/lib.rs` constructor and CRUD implementation;
+`crates/phenotype-surrealdb/src/lib.rs` ignored live SurrealKv tests; `surrealdb` local
+engine features in `crates/phenotype-surrealdb/Cargo.toml`.
 
 ---
 
@@ -446,6 +479,9 @@ are required CI steps.
 | `test_server.py`, `test_server_comprehensive.py` | FR-MCP-002, FR-MCP-003, FR-MCP-004, NFR-MCP-003 |
 | `test_integration.py` | FR-MCP-003 |
 | `test_governance_tools.py` | FR-MCP-005 |
+| `test_agent_tools.py` | FR-MCP-015 |
+| `test_knowledge_tools.py` | FR-MCP-015 |
+| `test_policy_tools.py` | FR-MCP-015 |
 | `test_session_tools.py` | FR-MCP-006 |
 | `test_workflow_tools.py` | FR-MCP-007 |
 | `test_configured_server.py` | FR-MCP-008 |
@@ -455,7 +491,7 @@ are required CI steps.
 | `doubles.rs :: search_double_*` | FR-MCP-009, NFR-MCP-001 |
 | `pheno-qdrant :: test_build_*`, `test_qdrant_client_is_search_port` | FR-MCP-012, NFR-MCP-001 |
 | `doubles.rs :: skill_store_*` | FR-MCP-010, NFR-MCP-001 |
-| `phenotype-surrealdb :: test_*` | FR-MCP-010, FR-MCP-011, NFR-MCP-001, NFR-MCP-005 |
+| `phenotype-surrealdb :: test_*` | FR-MCP-010, FR-MCP-014, NFR-MCP-001, NFR-MCP-005 |
 
 ---
 
@@ -463,10 +499,10 @@ are required CI steps.
 
 | ID | Title | Notes |
 |---|---|---|
-| PLAN-MCP-001 | Real SurrealDB client wiring | `TODO(surreal)` in `phenotype-surrealdb/src/lib.rs`; `surrealdb` crate already in `Cargo.toml`; only source swap needed |
+| ~~PLAN-MCP-001~~ | ~~Real SurrealDB client wiring~~ | **SHIPPED** → FR-MCP-014; `PhenoSurreal` now wires `surrealdb::Surreal` with `Mem` / `SurrealKv`, schema bootstrap, and CRUD via the SurrealDB API |
 | ~~PLAN-MCP-002~~ | ~~pheno-qdrant SearchPort adapter~~ | **SHIPPED** → FR-MCP-012; `QdrantClient` implements `SearchPort` via thin REST; 8 unit tests green |
 | PLAN-MCP-003 | pheno-meilisearch SearchPort adapter | `crates/pheno-meilisearch/` exists (stub); needs `SearchPort` impl backed by `meilisearch-sdk` |
-| PLAN-MCP-004 | Additional Parpoura tool bundles | Only governance/session/workflow wired; agent, knowledge, policy tool groups are PLANNED epics |
+| ~~PLAN-MCP-004~~ | ~~Additional Parpoura tool bundles~~ | **SHIPPED** → FR-MCP-015; agent, knowledge, and policy tool bundles are wired end-to-end with 11 tools total |
 | PLAN-MCP-005 | MCP ↔ Claude SDK contract hardening | No schema-level validation between MCP request shape and SDK client expectations; property-based tests needed |
 | ~~PLAN-MCP-006~~ | ~~Transport layer (stdio / HTTP / WS)~~ | **SHIPPED** → FR-MCP-013; `build_fastmcp_bridge` wraps configured Server over FastMCP stdio transport; `python -m pheno_mcp` entrypoint; 8 unit tests green |
 | PLAN-MCP-007 | Resource + Prompt handler end-to-end | Registration is wired; no Parpoura-backed handlers exist for `resources/read` or `prompts/get` |

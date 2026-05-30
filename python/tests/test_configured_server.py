@@ -3,7 +3,7 @@
 Mirrors the ledger_query wiring pattern:
   - schema present in tools.__init__
   - all register_* symbols exported
-  - create_configured_server registers all 8 tools end-to-end
+  - create_configured_server registers all 19 tools end-to-end
   - handle_request round-trip for each tool bundle via factory server
 """
 
@@ -24,6 +24,37 @@ from pheno_mcp.tools import (
     handle_ledger_query,
     handle_ledger_verify,
     register_governance_tools,
+    # agent
+    AGENT_TOOLS,
+    TOOL_AGENT_CREATE,
+    TOOL_AGENT_LIST,
+    TOOL_AGENT_GET,
+    TOOL_AGENT_DELETE,
+    handle_agent_create,
+    handle_agent_list,
+    handle_agent_get,
+    handle_agent_delete,
+    register_agent_tools,
+    # knowledge
+    KNOWLEDGE_TOOLS,
+    TOOL_KNOWLEDGE_STORE,
+    TOOL_KNOWLEDGE_RETRIEVE,
+    TOOL_KNOWLEDGE_SEARCH,
+    TOOL_KNOWLEDGE_DELETE,
+    handle_knowledge_store,
+    handle_knowledge_retrieve,
+    handle_knowledge_search,
+    handle_knowledge_delete,
+    register_knowledge_tools,
+    # policy
+    POLICY_TOOLS,
+    TOOL_POLICY_LIST,
+    TOOL_POLICY_GET,
+    TOOL_POLICY_EVALUATE,
+    handle_policy_list,
+    handle_policy_get,
+    handle_policy_evaluate,
+    register_policy_tools,
     # session
     SESSION_TOOLS,
     TOOL_SESSION_SUSPEND,
@@ -60,6 +91,40 @@ class TestToolsInitExports:
         assert callable(handle_ledger_query)
         assert callable(handle_ledger_verify)
         assert callable(register_governance_tools)
+
+    def test_agent_exports_present(self) -> None:
+        assert TOOL_AGENT_CREATE["name"] == "agent_create"
+        assert TOOL_AGENT_LIST["name"] == "agent_list"
+        assert TOOL_AGENT_GET["name"] == "agent_get"
+        assert TOOL_AGENT_DELETE["name"] == "agent_delete"
+        assert len(AGENT_TOOLS) == 4
+        assert callable(handle_agent_create)
+        assert callable(handle_agent_list)
+        assert callable(handle_agent_get)
+        assert callable(handle_agent_delete)
+        assert callable(register_agent_tools)
+
+    def test_knowledge_exports_present(self) -> None:
+        assert TOOL_KNOWLEDGE_STORE["name"] == "knowledge_store"
+        assert TOOL_KNOWLEDGE_RETRIEVE["name"] == "knowledge_retrieve"
+        assert TOOL_KNOWLEDGE_SEARCH["name"] == "knowledge_search"
+        assert TOOL_KNOWLEDGE_DELETE["name"] == "knowledge_delete"
+        assert len(KNOWLEDGE_TOOLS) == 4
+        assert callable(handle_knowledge_store)
+        assert callable(handle_knowledge_retrieve)
+        assert callable(handle_knowledge_search)
+        assert callable(handle_knowledge_delete)
+        assert callable(register_knowledge_tools)
+
+    def test_policy_exports_present(self) -> None:
+        assert TOOL_POLICY_LIST["name"] == "policy_list"
+        assert TOOL_POLICY_GET["name"] == "policy_get"
+        assert TOOL_POLICY_EVALUATE["name"] == "policy_evaluate"
+        assert len(POLICY_TOOLS) == 3
+        assert callable(handle_policy_list)
+        assert callable(handle_policy_get)
+        assert callable(handle_policy_evaluate)
+        assert callable(register_policy_tools)
 
     def test_session_exports_present(self) -> None:
         assert TOOL_SESSION_SUSPEND["name"] == "session_suspend"
@@ -104,7 +169,7 @@ class TestTopLevelExport:
 
 
 class TestCreateConfiguredServer:
-    """create_configured_server wires all 8 tools end-to-end."""
+    """create_configured_server wires all 19 tools end-to-end."""
 
     def test_returns_server_instance(self) -> None:
         server = create_configured_server()
@@ -115,10 +180,10 @@ class TestCreateConfiguredServer:
         server = create_configured_server(cfg)
         assert server.name == "test-server"
 
-    def test_registers_all_eight_tools(self) -> None:
+    def test_registers_all_nineteen_tools(self) -> None:
         server = create_configured_server()
         tools = server.list_tools()
-        assert len(tools) == 8
+        assert len(tools) == 19
 
     def test_all_expected_tool_names_present(self) -> None:
         server = create_configured_server()
@@ -126,6 +191,17 @@ class TestCreateConfiguredServer:
         expected = {
             "ledger_query",
             "ledger_verify",
+            "agent_create",
+            "agent_list",
+            "agent_get",
+            "agent_delete",
+            "knowledge_store",
+            "knowledge_retrieve",
+            "knowledge_search",
+            "knowledge_delete",
+            "policy_list",
+            "policy_get",
+            "policy_evaluate",
             "session_suspend",
             "session_resume",
             "workflow_execute",
@@ -152,7 +228,67 @@ class TestCreateConfiguredServer:
         server = create_configured_server()
         result = await server.handle_request("tools/list")
         assert "tools" in result
-        assert len(result["tools"]) == 8
+        assert len(result["tools"]) == 19
+
+    @pytest.mark.asyncio
+    async def test_agent_create_round_trip(self) -> None:
+        server = create_configured_server()
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"agent_id": "agent-1", "name": "Agent One"}
+        mock_resp.raise_for_status.return_value = None
+        mock_client = AsyncMock()
+        mock_client.post.return_value = mock_resp
+        mock_client.__aenter__.return_value = mock_client
+        mock_client.__aexit__.return_value = None
+
+        with patch("pheno_mcp.tools.agent_tools._client", return_value=mock_client):
+            result = await server.handle_request(
+                "tools/call",
+                {"name": "agent_create", "arguments": {"name": "Agent One"}},
+            )
+        assert result["agent_id"] == "agent-1"
+
+    @pytest.mark.asyncio
+    async def test_knowledge_store_round_trip(self) -> None:
+        server = create_configured_server()
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"knowledge_id": "k-1", "content": "note"}
+        mock_resp.raise_for_status.return_value = None
+        mock_client = AsyncMock()
+        mock_client.post.return_value = mock_resp
+        mock_client.__aenter__.return_value = mock_client
+        mock_client.__aexit__.return_value = None
+
+        with patch("pheno_mcp.tools.knowledge_tools._client", return_value=mock_client):
+            result = await server.handle_request(
+                "tools/call",
+                {
+                    "name": "knowledge_store",
+                    "arguments": {"knowledge_id": "k-1", "content": "note"},
+                },
+            )
+        assert result["knowledge_id"] == "k-1"
+
+    @pytest.mark.asyncio
+    async def test_policy_evaluate_round_trip(self) -> None:
+        server = create_configured_server()
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"policy_id": "p-1", "allowed": True}
+        mock_resp.raise_for_status.return_value = None
+        mock_client = AsyncMock()
+        mock_client.post.return_value = mock_resp
+        mock_client.__aenter__.return_value = mock_client
+        mock_client.__aexit__.return_value = None
+
+        with patch("pheno_mcp.tools.policy_tools._client", return_value=mock_client):
+            result = await server.handle_request(
+                "tools/call",
+                {
+                    "name": "policy_evaluate",
+                    "arguments": {"policy_id": "p-1", "context": {}},
+                },
+            )
+        assert result["allowed"] is True
 
 
 # ---------------------------------------------------------------------------
