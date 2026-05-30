@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 _BASE_URL = os.environ.get("PARPOURA_BASE_URL", "http://localhost:8001")
+POLICY_ID_DESCRIPTION = "Policy identifier"
 
 
 def _client() -> httpx.AsyncClient:
@@ -26,7 +28,7 @@ TOOL_POLICY_GET: dict[str, Any] = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "policy_id": {"type": "string", "description": "Policy identifier"},
+            "policy_id": {"type": "string", "description": POLICY_ID_DESCRIPTION},
         },
         "required": ["policy_id"],
     },
@@ -38,7 +40,7 @@ TOOL_POLICY_EVALUATE: dict[str, Any] = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "policy_id": {"type": "string", "description": "Policy identifier"},
+            "policy_id": {"type": "string", "description": POLICY_ID_DESCRIPTION},
             "context": {"type": "object", "description": "Evaluation context"},
         },
         "required": ["policy_id", "context"],
@@ -63,13 +65,14 @@ async def handle_policy_list(_args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def handle_policy_get(args: dict[str, Any]) -> dict[str, Any]:
-    policy_id: str = args["policy_id"]
-
     async with _client() as client:
         try:
+            policy_id = quote(args["policy_id"], safe="")
             response = await client.get(f"/api/v1/policies/{policy_id}")
             response.raise_for_status()
             return response.json()
+        except KeyError:
+            return {"error": "missing policy_id", "status_code": 400}
         except httpx.HTTPStatusError as exc:
             return {"error": exc.response.text, "status_code": exc.response.status_code}
 

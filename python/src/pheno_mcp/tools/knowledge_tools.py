@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 _BASE_URL = os.environ.get("PARPOURA_BASE_URL", "http://localhost:8001")
+KNOWLEDGE_ID_DESCRIPTION = "Knowledge identifier"
 
 
 def _client() -> httpx.AsyncClient:
@@ -20,7 +22,7 @@ TOOL_KNOWLEDGE_STORE: dict[str, Any] = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "knowledge_id": {"type": "string", "description": "Knowledge identifier"},
+            "knowledge_id": {"type": "string", "description": KNOWLEDGE_ID_DESCRIPTION},
             "content": {"type": "string", "description": "Knowledge content"},
             "metadata": {"type": "object", "description": "Optional knowledge metadata"},
         },
@@ -34,7 +36,7 @@ TOOL_KNOWLEDGE_RETRIEVE: dict[str, Any] = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "knowledge_id": {"type": "string", "description": "Knowledge identifier"},
+            "knowledge_id": {"type": "string", "description": KNOWLEDGE_ID_DESCRIPTION},
         },
         "required": ["knowledge_id"],
     },
@@ -59,7 +61,7 @@ TOOL_KNOWLEDGE_DELETE: dict[str, Any] = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "knowledge_id": {"type": "string", "description": "Knowledge identifier"},
+            "knowledge_id": {"type": "string", "description": KNOWLEDGE_ID_DESCRIPTION},
         },
         "required": ["knowledge_id"],
     },
@@ -84,13 +86,14 @@ async def handle_knowledge_store(args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def handle_knowledge_retrieve(args: dict[str, Any]) -> dict[str, Any]:
-    knowledge_id: str = args["knowledge_id"]
-
     async with _client() as client:
         try:
+            knowledge_id = quote(args["knowledge_id"], safe="")
             response = await client.get(f"/api/v1/knowledge/{knowledge_id}")
             response.raise_for_status()
             return response.json()
+        except KeyError:
+            return {"error": "missing knowledge_id", "status_code": 400}
         except httpx.HTTPStatusError as exc:
             return {"error": exc.response.text, "status_code": exc.response.status_code}
 
@@ -108,13 +111,14 @@ async def handle_knowledge_search(args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def handle_knowledge_delete(args: dict[str, Any]) -> dict[str, Any]:
-    knowledge_id: str = args["knowledge_id"]
-
     async with _client() as client:
         try:
+            knowledge_id = quote(args["knowledge_id"], safe="")
             response = await client.delete(f"/api/v1/knowledge/{knowledge_id}")
             response.raise_for_status()
             return response.json()
+        except KeyError:
+            return {"error": "missing knowledge_id", "status_code": 400}
         except httpx.HTTPStatusError as exc:
             return {"error": exc.response.text, "status_code": exc.response.status_code}
 

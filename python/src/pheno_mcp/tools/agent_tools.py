@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -87,25 +88,27 @@ async def handle_agent_list(_args: dict[str, Any]) -> dict[str, Any]:
 
 
 async def handle_agent_get(args: dict[str, Any]) -> dict[str, Any]:
-    agent_id: str = args["agent_id"]
-
     async with _client() as client:
         try:
+            agent_id = quote(args["agent_id"], safe="")
             response = await client.get(f"/api/v1/agents/{agent_id}")
             response.raise_for_status()
             return response.json()
+        except KeyError:
+            return {"error": "missing agent_id", "status_code": 400}
         except httpx.HTTPStatusError as exc:
             return {"error": exc.response.text, "status_code": exc.response.status_code}
 
 
 async def handle_agent_delete(args: dict[str, Any]) -> dict[str, Any]:
-    agent_id: str = args["agent_id"]
-
     async with _client() as client:
         try:
+            agent_id = quote(args["agent_id"], safe="")
             response = await client.delete(f"/api/v1/agents/{agent_id}")
             response.raise_for_status()
             return response.json()
+        except KeyError:
+            return {"error": "missing agent_id", "status_code": 400}
         except httpx.HTTPStatusError as exc:
             return {"error": exc.response.text, "status_code": exc.response.status_code}
 
