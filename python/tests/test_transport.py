@@ -14,7 +14,7 @@ skipped (not failed).
 
 Coverage
 --------
-- ``build_fastmcp_bridge`` wires all 8 configured tools onto FastMCP.
+- ``build_fastmcp_bridge`` wires all 19 configured tools onto FastMCP.
 - Tool description and name propagate through the bridge.
 - Delegating async handler calls ``server.handle_request`` correctly.
 - In-memory MCP client lists tools end-to-end (integration, may skip).
@@ -57,6 +57,17 @@ mcp_integration = pytest.mark.skipif(
 EXPECTED_TOOL_NAMES = {
     "ledger_query",
     "ledger_verify",
+    "agent_create",
+    "agent_list",
+    "agent_get",
+    "agent_delete",
+    "knowledge_store",
+    "knowledge_retrieve",
+    "knowledge_search",
+    "knowledge_delete",
+    "policy_list",
+    "policy_get",
+    "policy_evaluate",
     "session_suspend",
     "session_resume",
     "workflow_execute",
@@ -123,7 +134,7 @@ def _bridge_with_mock(server: Server) -> MagicMock:
 
 class TestBuildFastmcpBridgeUnit:
     def test_registers_all_configured_tools(self) -> None:
-        """All 8 pheno_mcp tools are registered on the mock FastMCP."""
+        """All 19 pheno_mcp tools are registered on the mock FastMCP."""
         fake = _bridge_with_mock(create_configured_server())
         assert {r["name"] for r in fake._registered} == EXPECTED_TOOL_NAMES
 
@@ -188,7 +199,7 @@ def test_transport_symbols_in_package_init() -> None:
 @mcp_integration
 @pytest.mark.asyncio
 async def test_in_memory_transport_lists_all_tools() -> None:
-    """MCP in-memory client connects and lists all 8 tools via bridge."""
+    """MCP in-memory client connects and lists all 19 tools via bridge."""
     from mcp.shared.memory import (  # type: ignore[import]  # noqa: PLC0415
         create_connected_server_and_client_session,
     )

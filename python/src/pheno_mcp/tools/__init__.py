@@ -31,6 +31,40 @@ from pheno_mcp.tools.governance_tools import (
     handle_ledger_verify,
     register_governance_tools,
 )
+from pheno_mcp.tools.agent_tools import (
+    AGENT_TOOLS,
+    TOOL_AGENT_CREATE,
+    TOOL_AGENT_LIST,
+    TOOL_AGENT_GET,
+    TOOL_AGENT_DELETE,
+    handle_agent_create,
+    handle_agent_list,
+    handle_agent_get,
+    handle_agent_delete,
+    register_agent_tools,
+)
+from pheno_mcp.tools.knowledge_tools import (
+    KNOWLEDGE_TOOLS,
+    TOOL_KNOWLEDGE_STORE,
+    TOOL_KNOWLEDGE_RETRIEVE,
+    TOOL_KNOWLEDGE_SEARCH,
+    TOOL_KNOWLEDGE_DELETE,
+    handle_knowledge_store,
+    handle_knowledge_retrieve,
+    handle_knowledge_search,
+    handle_knowledge_delete,
+    register_knowledge_tools,
+)
+from pheno_mcp.tools.policy_tools import (
+    POLICY_TOOLS,
+    TOOL_POLICY_LIST,
+    TOOL_POLICY_GET,
+    TOOL_POLICY_EVALUATE,
+    handle_policy_list,
+    handle_policy_get,
+    handle_policy_evaluate,
+    register_policy_tools,
+)
 
 __all__ = [
     # Session tools
@@ -58,4 +92,35 @@ __all__ = [
     "handle_ledger_query",
     "handle_ledger_verify",
     "register_governance_tools",
+    # Agent tools
+    "AGENT_TOOLS",
+    "TOOL_AGENT_CREATE",
+    "TOOL_AGENT_LIST",
+    "TOOL_AGENT_GET",
+    "TOOL_AGENT_DELETE",
+    "handle_agent_create",
+    "handle_agent_list",
+    "handle_agent_get",
+    "handle_agent_delete",
+    "register_agent_tools",
+    # Knowledge tools
+    "KNOWLEDGE_TOOLS",
+    "TOOL_KNOWLEDGE_STORE",
+    "TOOL_KNOWLEDGE_RETRIEVE",
+    "TOOL_KNOWLEDGE_SEARCH",
+    "TOOL_KNOWLEDGE_DELETE",
+    "handle_knowledge_store",
+    "handle_knowledge_retrieve",
+    "handle_knowledge_search",
+    "handle_knowledge_delete",
+    "register_knowledge_tools",
+    # Policy tools
+    "POLICY_TOOLS",
+    "TOOL_POLICY_LIST",
+    "TOOL_POLICY_GET",
+    "TOOL_POLICY_EVALUATE",
+    "handle_policy_list",
+    "handle_policy_get",
+    "handle_policy_evaluate",
+    "register_policy_tools",
 ]
