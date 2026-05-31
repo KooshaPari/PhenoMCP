@@ -1,0 +1,6 @@
+# aws-lc-sys (pulled transitively via surrealdb protocol-ws -> rustls -> aws-lc-rs)
+# requires NASM to assemble its crypto routines on x86_64 Windows. Rather than
+# mandating a local NASM install, use the upstream-published prebuilt NASM objects.
+# See: https://github.com/aws/aws-lc-rs/tree/main/aws-lc-sys#use-of-prebuilt-nasm-objects
+[env]
+AWS_LC_SYS_PREBUILT_NASM = "1"
