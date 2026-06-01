@@ -3788,9 +3788,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "surrealdb"
-version = "3.1.2"
+version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290298f4df7c85ed50881d15ce4a49ec0d3d030e0e9e5215c0b5344afe5ef380"
+checksum = "504a96b55e86ef8653a03b6b97e771f49c954e26bcc0308160b0134d94f334fd"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -3967,7 +3967,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b24fe0d9852fdd25f4746be5ea3570f2b56273cfa4e3303fb77fa770a3e33a8"
 dependencies = [
  "anyhow",
- "async-channel",
  "bytes",
  "castaway",
  "chrono",
@@ -3979,14 +3978,12 @@ dependencies = [
  "rand 0.9.4",
  "regex",
  "rust_decimal",
- "semver",
  "serde",
  "serde_json",
  "surrealdb-protocol",
  "surrealdb-types-derive",
  "tracing",
  "ulid",
- "url",
  "uuid",
 ]
 
